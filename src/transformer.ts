@@ -1,104 +1,85 @@
-import type { PluggableList, Plugin } from "unified";
-import type { Root as MdastRoot } from "mdast";
-import type { Root as HastRoot, Element } from "hast";
-import type { VFile } from "vfile";
-import remarkGfm from "remark-gfm";
-import rehypeSlug from "rehype-slug";
-import { findAndReplace } from "mdast-util-find-and-replace";
-import { visit } from "unist-util-visit";
-import type { QuartzTransformerPlugin } from "@jackyzha0/quartz/plugins/types";
-import type { BuildCtx } from "@jackyzha0/quartz/util/ctx";
-import type { ExampleTransformerOptions } from "./types";
+import remarkMath from "remark-math";
+import rehypeKatex from "rehype-katex";
+import rehypeMathjax from "rehype-mathjax/svg";
+import rehypeTypst from "@myriaddreamin/rehype-typst";
+import type { QuartzTransformerPlugin } from "@quartz-community/types";
+import type { KatexOptions } from "katex";
 
-const defaultOptions: ExampleTransformerOptions = {
-  highlightToken: "==",
-  headingClass: "example-plugin-heading",
-  enableGfm: true,
-  addHeadingSlugs: true,
-};
+interface MathjaxTexOptions {
+  macros?: Record<string, string | unknown[]>;
+  [key: string]: unknown;
+}
 
-const escapeRegExp = (value: string) => value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+interface MathjaxOptions {
+  tex?: MathjaxTexOptions;
+  [key: string]: unknown;
+}
 
-const remarkHighlightToken = (token: string): Plugin<[], MdastRoot> => {
-  const escapedToken = escapeRegExp(token);
-  const pattern = new RegExp(`${escapedToken}([^\n]+?)${escapedToken}`, "g");
-  return () => (tree: MdastRoot, _file: VFile) => {
-    findAndReplace(tree, [
-      [
-        pattern,
-        (_match: string, value: string) => ({
-          type: "strong",
-          children: [{ type: "text", value }],
-        }),
-      ],
-    ]);
-  };
-};
+interface TypstOptions {
+  [key: string]: unknown;
+}
 
-const rehypeHeadingClass = (className: string): Plugin<[], HastRoot> => {
-  return () => (tree: HastRoot, _file: VFile) => {
-    visit(tree, "element", (node: Element) => {
-      if (!/^h[1-6]$/.test(node.tagName)) {
-        return;
-      }
+export type Args = boolean | number | string | null;
 
-      const existing = node.properties?.className;
-      const classes: string[] = Array.isArray(existing)
-        ? existing.filter((value): value is string => typeof value === "string")
-        : typeof existing === "string"
-          ? [existing]
-          : [];
-      node.properties = {
-        ...node.properties,
-        className: [...classes, className],
-      };
-    });
-  };
-};
+interface MacroType {
+  [key: string]: string | Args[];
+}
 
-/**
- * Example transformer showing remark/rehype usage and resource injection.
- */
-export const ExampleTransformer: QuartzTransformerPlugin<Partial<ExampleTransformerOptions>> = (
-  userOptions?: Partial<ExampleTransformerOptions>,
-) => {
-  const options = { ...defaultOptions, ...userOptions };
+export interface LatexOptions {
+  renderEngine: "katex" | "mathjax" | "typst";
+  customMacros: MacroType;
+  katexOptions: Omit<KatexOptions, "macros" | "output">;
+  mathJaxOptions: Omit<MathjaxOptions, "macros">;
+  typstOptions: TypstOptions;
+}
+
+export const Latex: QuartzTransformerPlugin<Partial<LatexOptions>> = (opts) => {
+  const engine = opts?.renderEngine ?? "katex";
+  const macros = opts?.customMacros ?? {};
   return {
-    name: "ExampleTransformer",
-    textTransform(_ctx: BuildCtx, src: string) {
-      return src.endsWith("\n") ? src : `${src}\n`;
+    name: "Latex",
+    markdownPlugins() {
+      return [remarkMath];
     },
-    markdownPlugins(): PluggableList {
-      const plugins: PluggableList = [remarkHighlightToken(options.highlightToken)];
-      if (options.enableGfm) {
-        plugins.unshift(remarkGfm);
+    htmlPlugins() {
+      switch (engine) {
+        case "katex": {
+          return [[rehypeKatex, { output: "html", macros, ...(opts?.katexOptions ?? {}) }]];
+        }
+        case "typst": {
+          return [[rehypeTypst, opts?.typstOptions ?? {}]];
+        }
+        default:
+        case "mathjax": {
+          return [
+            [
+              rehypeMathjax,
+              {
+                ...(opts?.mathJaxOptions ?? {}),
+                tex: {
+                  ...(opts?.mathJaxOptions?.tex ?? {}),
+                  macros,
+                },
+              },
+            ],
+          ];
+        }
       }
-      return plugins;
-    },
-    htmlPlugins(): PluggableList {
-      const plugins: PluggableList = [rehypeHeadingClass(options.headingClass)];
-      if (options.addHeadingSlugs) {
-        plugins.unshift(rehypeSlug);
-      }
-      return plugins;
     },
     externalResources() {
-      return {
-        css: [
-          {
-            content: `.${options.headingClass} { letter-spacing: 0.02em; }`,
-            inline: true,
-          },
-        ],
-        js: [
-          {
-            contentType: "inline",
-            loadTime: "afterDOMReady",
-            script: "document.documentElement.dataset.exampleTransformer = 'true'",
-          },
-        ],
-        additionalHead: [],
-      };
+      switch (engine) {
+        case "katex":
+          return {
+            css: [{ content: "https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css" }],
+            js: [
+              {
+                src: "https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/copy-tex.min.js",
+                loadTime: "afterDOMReady",
+                contentType: "external",
+              },
+            ],
+          };
+      }
     },
   };
 };
