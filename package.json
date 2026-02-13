@@ -59,7 +59,7 @@
   },
   "dependencies": {
     "@myriaddreamin/rehype-typst": "^0.5.0",
-    "@quartz-community/types": "file:../types",
+    "@quartz-community/types": "github:quartz-community/types",
     "rehype-katex": "^7.0.1",
     "rehype-mathjax": "^6.0.0",
     "remark-math": "^6.0.0"
