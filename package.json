@@ -95,6 +95,16 @@
     "defaultEnabled": true,
     "defaultOptions": {
       "renderEngine": "katex"
+    },
+    "optionSchema": {
+      "renderEngine": {
+        "type": "enum",
+        "values": [
+          "katex",
+          "mathjax",
+          "typst"
+        ]
+      }
     }
   }
 }
