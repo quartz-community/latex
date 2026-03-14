@@ -47,7 +47,11 @@
   },
   "peerDependencies": {
     "@jackyzha0/quartz": "^4.5.2",
-    "preact": "^10.0.0"
+    "preact": "^10.0.0",
+    "@myriaddreamin/rehype-typst": "^0.5.0",
+    "rehype-katex": "^7.0.1",
+    "rehype-mathjax": "^6.0.0",
+    "remark-math": "^6.0.0"
   },
   "peerDependenciesMeta": {
     "@jackyzha0/quartz": {
@@ -55,16 +59,22 @@
     },
     "preact": {
       "optional": false
+    },
+    "@myriaddreamin/rehype-typst": {
+      "optional": true
+    },
+    "rehype-katex": {
+      "optional": true
+    },
+    "rehype-mathjax": {
+      "optional": true
+    },
+    "remark-math": {
+      "optional": true
     }
   },
   "dependencies": {
-    "@myriaddreamin/rehype-typst": "^0.5.0",
-    "@quartz-community/types": "github:quartz-community/types",
-    "rehype-katex": "^7.0.1",
-    "rehype-mathjax": "^6.0.0",
-    "remark-math": "^6.0.0",
-    "tsup": "^8.5.0",
-    "typescript": "^5.9.3"
+    "@quartz-community/types": "github:quartz-community/types"
   },
   "devDependencies": {
     "@types/hast": "^3.0.4",
@@ -78,7 +88,9 @@
     "katex": "^0.16.11",
     "preact": "^10.28.2",
     "prettier": "^3.6.2",
-    "vitest": "^2.1.9"
+    "vitest": "^2.1.9",
+    "tsup": "^8.5.0",
+    "typescript": "^5.9.3"
   },
   "engines": {
     "node": ">=22",
