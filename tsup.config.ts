@@ -16,4 +16,10 @@ export default defineConfig({
   banner: {
     js: 'import { createRequire } from "module"; const require = createRequire(import.meta.url);',
   },
+  esbuildOptions(options) {
+    options.define = {
+      ...options.define,
+      PACKAGE_VERSION: '"3.2.1"',
+    };
+  },
 });
