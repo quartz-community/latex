@@ -1,5 +1,5 @@
-import remarkMath from "@jajaperson/remark-math";
-import rehypeKatex from "@jajaperson/rehype-katex";
+import remarkMath from "remark-math";
+import rehypeKatex from "rehype-katex";
 import rehypeMathjaxSvg, { type Options as SvgOptions } from "@jajaperson/rehype-mathjax/svg";
 import rehypeMathjaxChtml, { type Options as ChtmlOptions } from "@jajaperson/rehype-mathjax/chtml";
 import rehypeTypst from "@myriaddreamin/rehype-typst";
