@@ -1,6 +1,6 @@
 {
   "name": "@quartz-community/latex",
-  "version": "0.1.1",
+  "version": "1.0.0",
   "description": "LaTeX/KaTeX/MathJax/Typst math rendering plugin for Quartz",
   "type": "module",
   "license": "MIT",
@@ -59,7 +59,7 @@
     }
   },
   "dependencies": {
-    "@quartz-community/types": "^0.2.1"
+    "@quartz-community/types": "^1.0.0"
   },
   "devDependencies": {
     "@myriaddreamin/rehype-typst": "^0.6.0",
