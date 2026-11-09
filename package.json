@@ -118,6 +118,9 @@
       },
       "typstOptions": {
         "type": "object"
+      },
+      "customMacros": {
+        "type": "object"
       }
     }
   },
