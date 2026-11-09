@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.0.2
+
+### Patch Changes
+
+- 03a8b99: The manifest declares the `customMacros` option, so option checks and Quartz Syncer know it.
+
 ## 1.0.1
 
 ### Patch Changes
