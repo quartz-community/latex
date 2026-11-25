@@ -4,6 +4,7 @@ import rehypeMathjax from "rehype-mathjax/svg";
 import rehypeTypst from "@myriaddreamin/rehype-typst";
 import type { QuartzTransformerPlugin } from "@quartz-community/types";
 import type { KatexOptions } from "katex";
+import { markMath, obsidianMathClasses } from "./obsidian-math";
 
 interface MathjaxTexOptions {
   macros?: Record<string, string | unknown[]>;
@@ -36,35 +37,41 @@ export interface LatexOptions {
 export const Latex: QuartzTransformerPlugin<Partial<LatexOptions>> = (opts) => {
   const engine = opts?.renderEngine ?? "katex";
   const macros = opts?.customMacros ?? {};
+  const renderer = (): ReturnType<
+    NonNullable<ReturnType<QuartzTransformerPlugin>["htmlPlugins"]>
+  > => {
+    switch (engine) {
+      case "katex": {
+        return [[rehypeKatex, { output: "html", macros, ...(opts?.katexOptions ?? {}) }]];
+      }
+      case "typst": {
+        return [[rehypeTypst, opts?.typstOptions ?? {}]];
+      }
+      default:
+      case "mathjax": {
+        return [
+          [
+            rehypeMathjax,
+            {
+              ...(opts?.mathJaxOptions ?? {}),
+              tex: {
+                ...(opts?.mathJaxOptions?.tex ?? {}),
+                macros,
+              },
+            },
+          ],
+        ];
+      }
+    }
+  };
   return {
     name: "Latex",
     markdownPlugins() {
       return [remarkMath];
     },
     htmlPlugins() {
-      switch (engine) {
-        case "katex": {
-          return [[rehypeKatex, { output: "html", macros, ...(opts?.katexOptions ?? {}) }]];
-        }
-        case "typst": {
-          return [[rehypeTypst, opts?.typstOptions ?? {}]];
-        }
-        default:
-        case "mathjax": {
-          return [
-            [
-              rehypeMathjax,
-              {
-                ...(opts?.mathJaxOptions ?? {}),
-                tex: {
-                  ...(opts?.mathJaxOptions?.tex ?? {}),
-                  macros,
-                },
-              },
-            ],
-          ];
-        }
-      }
+      // Obsidian's maths elements around each rendered formula (obsidian-math.ts).
+      return [markMath, ...renderer(), obsidianMathClasses];
     },
     externalResources() {
       switch (engine) {
