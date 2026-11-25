@@ -14,14 +14,16 @@ describe("Latex", () => {
     const ctx = createCtx();
     const transformer = Latex();
     const plugins = transformer.htmlPlugins?.(ctx) ?? [];
-    expect(plugins).toHaveLength(1);
+    // The renderer between the steps for Obsidian's maths elements.
+    expect(plugins).toHaveLength(3);
   });
 
   it("uses mathjax when configured", () => {
     const ctx = createCtx();
     const transformer = Latex({ renderEngine: "mathjax" });
     const plugins = transformer.htmlPlugins?.(ctx) ?? [];
-    expect(plugins).toHaveLength(1);
+    // The renderer between the steps for Obsidian's maths elements.
+    expect(plugins).toHaveLength(3);
   });
 
   it("provides katex external resources", () => {
