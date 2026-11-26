@@ -4,10 +4,43 @@ import rehypeMathjax from "rehype-mathjax/svg";
 import rehypeTypst from "@myriaddreamin/rehype-typst";
 import type { QuartzTransformerPlugin } from "@quartz-community/types";
 import type { KatexOptions } from "katex";
-import { h } from "preact";
+import { Fragment, h } from "preact";
 import { markMath, obsidianMathClasses } from "./obsidian-math";
 
-const KATEX_CSS = "https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css";
+export const KATEX_CSS = "https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css";
+
+/** The `<head>` link(s) for KaTeX's stylesheet; see `externalResources` below. */
+export const katexStylesheet = (fileData: { hasMath?: boolean }) =>
+  fileData?.hasMath
+    ? h("link", { rel: "stylesheet", href: KATEX_CSS, "data-persist": true })
+    : h(
+        Fragment,
+        null,
+        h("link", { rel: "preload", as: "style", href: KATEX_CSS, "data-persist": true }),
+        h(
+          "noscript",
+          { "data-persist": true },
+          h("link", { rel: "stylesheet", href: KATEX_CSS, "data-persist": true }),
+        ),
+      );
+
+/**
+ * Applies KaTeX's stylesheet on pages without maths of their own, once per full page load.
+ * A stylesheet added by a script does not block rendering; `data-persist` keeps it through
+ * SPA navigation.
+ */
+export const applyKatexStylesheet = `(() => {
+  const href = ${JSON.stringify(KATEX_CSS)};
+  const linked = [...document.head.querySelectorAll('link[rel="stylesheet"]')].some(
+    (link) => link.getAttribute("href") === href,
+  );
+  if (linked) return;
+  const link = document.createElement("link");
+  link.rel = "stylesheet";
+  link.href = href;
+  link.setAttribute("data-persist", "");
+  document.head.appendChild(link);
+})();`;
 
 interface MathjaxTexOptions {
   macros?: Record<string, string | unknown[]>;
@@ -80,23 +113,20 @@ export const Latex: QuartzTransformerPlugin<Partial<LatexOptions>> = (opts) => {
       switch (engine) {
         case "katex":
           return {
-            // KaTeX's stylesheet blocks rendering only on pages with maths of their
-            // own. Elsewhere it loads without blocking (`media="print"`, switched to
-            // `all` once loaded), still in time for maths that arrives later: in
-            // popovers, transclusions, or after SPA navigation.
+            // KaTeX's stylesheet blocks rendering only on pages with maths of their own.
+            // Elsewhere it is preloaded and applied by a small script (Preact drops `on*`
+            // attributes, so the `media="print"` + `onload` trick cannot be used), with a
+            // `<noscript>` link for transclusions when scripts are off. Both stylesheets
+            // are `data-persist`, so they survive SPA navigation and also style maths that
+            // arrives later: in popovers, transclusions, or pages opened with SPA navigation.
             css: [],
-            additionalHead: [
-              (fileData: { hasMath?: boolean }) =>
-                fileData?.hasMath
-                  ? h("link", { rel: "stylesheet", href: KATEX_CSS })
-                  : h("link", {
-                      rel: "stylesheet",
-                      href: KATEX_CSS,
-                      media: "print",
-                      onLoad: "this.media='all'",
-                    }),
-            ],
+            additionalHead: [katexStylesheet],
             js: [
+              {
+                script: applyKatexStylesheet,
+                loadTime: "afterDOMReady",
+                contentType: "inline",
+              },
               {
                 src: "https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/copy-tex.min.js",
                 loadTime: "afterDOMReady",
