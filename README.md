@@ -33,7 +33,7 @@ plugins:
 | `mathJaxOptions` | `MathjaxOptions`                   | `undefined` | Options passed to MathJax ([MathJax docs](https://docs.mathjax.org/en/latest/options/)).                                                           |
 | `typstOptions`   | `TypstOptions`                     | `undefined` | Options passed to the Typst renderer.                                                                                                              |
 
-With KaTeX, the KaTeX stylesheet and its copy-tex script are loaded from jsDelivr.
+With KaTeX, the KaTeX stylesheet and its copy-tex script are loaded from jsDelivr. The stylesheet blocks rendering only on pages with math; elsewhere it loads in the background, ready for pages opened with SPA navigation.
 
 ## Documentation
 
