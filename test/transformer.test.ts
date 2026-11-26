@@ -30,8 +30,19 @@ describe("Latex", () => {
     const ctx = createCtx();
     const transformer = Latex({ renderEngine: "katex" });
     const resources = transformer.externalResources?.(ctx);
-    expect(resources?.css).toHaveLength(1);
+    expect(resources?.css).toHaveLength(0);
     expect(resources?.js).toHaveLength(1);
+    expect(resources?.additionalHead).toHaveLength(1);
+  });
+
+  it("blocks rendering on KaTeX's stylesheet only on pages with maths", () => {
+    const resources = Latex({ renderEngine: "katex" }).externalResources?.(createCtx());
+    const link = resources?.additionalHead?.[0] as (data: { hasMath?: boolean }) => {
+      props: Record<string, unknown>;
+    };
+    expect(link({ hasMath: true }).props.media).toBeUndefined();
+    expect(link({}).props.media).toBe("print");
+    expect(link({}).props.onLoad).toBe("this.media='all'");
   });
 
   it("has name Latex", () => {
