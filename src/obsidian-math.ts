@@ -69,10 +69,12 @@ export const markMath = () => (tree: Root) => {
 };
 
 /** After rendering: the markers as Obsidian's maths elements. */
-export const obsidianMathClasses = () => (tree: Root) => {
+export const obsidianMathClasses = () => (tree: Root, file?: { data: Record<string, unknown> }) => {
   walk(tree, (el) => {
     const kind = el.properties[MARKER];
     if (kind !== "inline" && kind !== "block") return;
+    // The page has maths of its own: its stylesheet must not wait (see transformer.ts).
+    if (file) file.data.hasMath = true;
     delete el.properties[MARKER];
     el.properties.className = [
       "math",

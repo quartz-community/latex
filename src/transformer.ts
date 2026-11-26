@@ -4,7 +4,10 @@ import rehypeMathjax from "rehype-mathjax/svg";
 import rehypeTypst from "@myriaddreamin/rehype-typst";
 import type { QuartzTransformerPlugin } from "@quartz-community/types";
 import type { KatexOptions } from "katex";
+import { h } from "preact";
 import { markMath, obsidianMathClasses } from "./obsidian-math";
+
+const KATEX_CSS = "https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css";
 
 interface MathjaxTexOptions {
   macros?: Record<string, string | unknown[]>;
@@ -77,7 +80,22 @@ export const Latex: QuartzTransformerPlugin<Partial<LatexOptions>> = (opts) => {
       switch (engine) {
         case "katex":
           return {
-            css: [{ content: "https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css" }],
+            // KaTeX's stylesheet blocks rendering only on pages with maths of their
+            // own. Elsewhere it loads without blocking (`media="print"`, switched to
+            // `all` once loaded), still in time for maths that arrives later: in
+            // popovers, transclusions, or after SPA navigation.
+            css: [],
+            additionalHead: [
+              (fileData: { hasMath?: boolean }) =>
+                fileData?.hasMath
+                  ? h("link", { rel: "stylesheet", href: KATEX_CSS })
+                  : h("link", {
+                      rel: "stylesheet",
+                      href: KATEX_CSS,
+                      media: "print",
+                      onLoad: "this.media='all'",
+                    }),
+            ],
             js: [
               {
                 src: "https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/copy-tex.min.js",
