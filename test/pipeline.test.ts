@@ -129,15 +129,41 @@ describe("render engines", () => {
     expect(undefinedMacros(without.all)).toHaveLength(1);
   });
 
-  // BUG: customMacros are documented in KaTeX's form, `{"\\R": "\\mathbb{R}"}`, "used by KaTeX
-  // and MathJax", but they go to MathJax as they are, and MathJax's `tex.macros` names have no
-  // backslash: `\R` stays undefined (red) with MathJax
-  it.fails("passes KaTeX-style custom macros (with a backslash) to MathJax", async () => {
+  // customMacros are documented in KaTeX's form, `{"\\R": "\\mathbb{R}"}`, "used by KaTeX and
+  // MathJax"; MathJax's `tex.macros` names have no backslash, so the plugin strips one.
+  // The double-struck R that \mathbb{R} draws, U+211D
+  const doubleStruckR = (all: Element[]) => all.filter((el) => el.properties.dataC === "211D");
+
+  it("passes KaTeX-style custom macros (with a backslash) to MathJax", async () => {
     const { all } = await render("$\\RR$", {
       renderEngine: "mathjax",
       customMacros: { "\\RR": "\\mathbb{R}" },
     });
     expect(undefinedMacros(all)).toEqual([]);
+    expect(mathJaxErrors(all)).toEqual([]);
+    expect(doubleStruckR(all).length).toBeGreaterThan(0);
+  });
+
+  it("keeps MathJax-style custom macros (without a backslash) and their arguments", async () => {
+    const { all } = await render("$\\RR$ $\\half{x}$", {
+      renderEngine: "mathjax",
+      // MathJax's array form: [definition, number of arguments]
+      customMacros: { RR: "\\mathbb{R}", half: ["\\frac{#1}{2}", 1] },
+    });
+    expect(undefinedMacros(all)).toEqual([]);
+    expect(mathJaxErrors(all)).toEqual([]);
+    expect(doubleStruckR(all).length).toBeGreaterThan(0);
+    expect(all.filter((el) => el.properties.dataMmlNode === "mfrac")).toHaveLength(1);
+  });
+
+  it("passes KaTeX-style custom macros with arguments to MathJax", async () => {
+    const { all } = await render("$\\half{x}$", {
+      renderEngine: "mathjax",
+      customMacros: { "\\half": ["\\frac{#1}{2}", 1] },
+    });
+    expect(undefinedMacros(all)).toEqual([]);
+    expect(mathJaxErrors(all)).toEqual([]);
+    expect(all.filter((el) => el.properties.dataMmlNode === "mfrac")).toHaveLength(1);
   });
 
   it("passes mathJaxOptions and mathJaxOptions.tex to MathJax", async () => {

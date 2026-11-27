@@ -70,6 +70,19 @@ export interface LatexOptions {
   typstOptions: TypstOptions;
 }
 
+/**
+ * MathJax's `tex.macros` names have no backslash, KaTeX's do: `customMacros` are written in
+ * KaTeX's form (`{"\\R": "\\mathbb{R}"}`), so strip one leading backslash for MathJax. Names
+ * without one are kept as they are.
+ */
+const mathJaxMacros = (macros: MacroType): MacroType =>
+  Object.fromEntries(
+    Object.entries(macros).map(([name, value]) => [
+      name.startsWith("\\") ? name.slice(1) : name,
+      value,
+    ]),
+  );
+
 export const Latex: QuartzTransformerPlugin<Partial<LatexOptions>> = (opts) => {
   const engine = opts?.renderEngine ?? "katex";
   const macros = opts?.customMacros ?? {};
@@ -92,7 +105,7 @@ export const Latex: QuartzTransformerPlugin<Partial<LatexOptions>> = (opts) => {
               ...(opts?.mathJaxOptions ?? {}),
               tex: {
                 ...(opts?.mathJaxOptions?.tex ?? {}),
-                macros,
+                macros: mathJaxMacros(macros),
               },
             },
           ],
