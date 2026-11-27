@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.1.3
+
+### Patch Changes
+
+- 1dccf54: `customMacros` written in KaTeX's form, with a leading backslash (`{"\\R": "\\mathbb{R}"}`), now also work with the MathJax renderer.
+
 ## 1.1.2
 
 ### Patch Changes
