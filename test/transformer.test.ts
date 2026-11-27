@@ -1,4 +1,8 @@
 import { describe, expect, it } from "vitest";
+import rehypeKatex from "rehype-katex";
+import rehypeMathjax from "rehype-mathjax/svg";
+import rehypeTypst from "@myriaddreamin/rehype-typst";
+import { markMath, obsidianMathClasses } from "../src/obsidian-math";
 import { KATEX_CSS, Latex, katexStylesheet } from "../src/transformer";
 import { createCtx } from "./helpers";
 
@@ -15,7 +19,11 @@ describe("Latex", () => {
     const transformer = Latex();
     const plugins = transformer.htmlPlugins?.(ctx) ?? [];
     // The renderer between the steps for Obsidian's maths elements.
-    expect(plugins).toHaveLength(3);
+    expect(plugins).toEqual([
+      markMath,
+      [rehypeKatex, { output: "html", macros: {} }],
+      obsidianMathClasses,
+    ]);
   });
 
   it("uses mathjax when configured", () => {
@@ -23,7 +31,16 @@ describe("Latex", () => {
     const transformer = Latex({ renderEngine: "mathjax" });
     const plugins = transformer.htmlPlugins?.(ctx) ?? [];
     // The renderer between the steps for Obsidian's maths elements.
-    expect(plugins).toHaveLength(3);
+    expect(plugins).toEqual([
+      markMath,
+      [rehypeMathjax, { tex: { macros: {} } }],
+      obsidianMathClasses,
+    ]);
+  });
+
+  it("uses typst when configured", () => {
+    const plugins = Latex({ renderEngine: "typst" }).htmlPlugins?.(createCtx()) ?? [];
+    expect(plugins).toEqual([markMath, [rehypeTypst, {}], obsidianMathClasses]);
   });
 
   it("provides katex external resources", () => {
